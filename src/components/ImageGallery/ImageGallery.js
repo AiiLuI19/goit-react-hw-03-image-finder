@@ -3,9 +3,9 @@ import { Component } from 'react';
 import { toast } from 'react-toastify';
 import fetchImages from '../../services/fetchImages';
 import ImageGalleryItem from './ImageGalleryItem';
-import Loader from '../Loader/Loader';
-import Modal from '../Modal/Modal';
-import Button from '../Button/Button';
+import Loader from '../Loader';
+import Modal from '../Modal';
+import Button from '../Button';
 import s from './ImageGallery.module.css';
 
 class ImageGallery extends Component {
@@ -29,10 +29,17 @@ class ImageGallery extends Component {
         .fetchImages(nextName, page)
         .then(images => {
           this.setState(prevState => ({
-            images: [...images.hits, ...prevState.images],
+            // images: [...images.hits],
+            images: [...prevState.images, ...images.hits],
             totalPages: Math.ceil(images.totalHits / 12),
             status: 'resolved',
           }));
+          if (prevName !== nextName) {
+            this.setState({
+              images: [...images.hits],
+              status: 'resolved',
+            });
+          }
           if (!images.hits.length) {
             this.setState({ images: [], status: 'rejected' });
             toast.error(`Sorry, ${nextName} not found`);
@@ -60,42 +67,35 @@ class ImageGallery extends Component {
   render() {
     const { images, error, status, page, totalPages, showModal, largeImage } =
       this.state;
+    return (
+      <>
+        {status === 'rejected' && <h1>{error}</h1>}
 
-    // if (status === 'idle') {
-    //   return <div> Search images and photos</div>;
-    // }
-    if (status === 'pending') {
-      return <Loader />;
-    }
-    if (status === 'rejected') {
-      return <h1>{error}</h1>;
-    }
-    if (status === 'resolved') {
-      return (
         <>
-          <>
-            <ul className={s.gallery}>
-              {images.map(({ id, webformatURL, largeImageURL, tags }) => (
-                <li key={id} className={s.item}>
-                  <ImageGalleryItem
-                    webformatURL={webformatURL}
-                    tags={tags}
-                    onClickModal={() => this.toggleModal(largeImageURL)}
-                  />
-                </li>
-              ))}
-            </ul>
-            {page !== totalPages && <Button onLoadMore={this.onLoadMore} />}
-          </>
-
-          {showModal && (
-            <Modal onClose={this.toggleModal}>
-              <img src={largeImage} alt={this.tags} className={s.modalImage} />
-            </Modal>
+          <ul className={s.gallery}>
+            {images.map(({ id, webformatURL, largeImageURL, tags }) => (
+              <li key={id} className={s.item}>
+                <ImageGalleryItem
+                  webformatURL={webformatURL}
+                  tags={tags}
+                  onClickModal={() => this.toggleModal(largeImageURL)}
+                />
+              </li>
+            ))}
+          </ul>
+          {status === 'pending' && <Loader />}
+          {page !== totalPages && status === 'resolved' && (
+            <Button onLoadMore={this.onLoadMore} />
           )}
         </>
-      );
-    }
+
+        {showModal && (
+          <Modal onClose={this.toggleModal}>
+            <img src={largeImage} alt={this.tags} className={s.modalImage} />
+          </Modal>
+        )}
+      </>
+    );
   }
 }
 
