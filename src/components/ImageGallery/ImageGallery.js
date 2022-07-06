@@ -29,7 +29,7 @@ class ImageGallery extends Component {
         .fetchImages(nextName, page)
         .then(images => {
           this.setState(prevState => ({
-            images: [...prevState.images, ...images.hits],
+            images: [...images.hits, ...prevState.images],
             totalPages: Math.ceil(images.totalHits / 12),
             status: 'resolved',
           }));
@@ -85,8 +85,9 @@ class ImageGallery extends Component {
                 </li>
               ))}
             </ul>
+            {page !== totalPages && <Button onLoadMore={this.onLoadMore} />}
           </>
-          {page !== totalPages && <Button onLoadMore={this.onLoadMore} />}
+
           {showModal && (
             <Modal onClose={this.toggleModal}>
               <img src={largeImage} alt={this.tags} className={s.modalImage} />
